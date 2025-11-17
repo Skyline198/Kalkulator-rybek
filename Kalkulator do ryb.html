@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<title>Kalkulator Ryb – Animacje</title>
+<style>
+/* --- PODSTAWOWE STYLE --- */
+body {
+    font-family: 'Segoe UI', Tahoma, sans-serif;
+    background: linear-gradient(120deg, #041824, #0b2d3f, #04202d);
+    background-size: 300% 300%;
+    animation: ocean 12s ease infinite;
+    color: #dff7ff;
+    padding: 20px;
+    overflow-x: hidden;
+    transition: background 0.3s, color 0.3s;
+}
+body.light {
+    background: linear-gradient(120deg, #d0e4f2, #b3d8ee, #cfe3f6);
+    color: #041824;
+}
+
+@keyframes ocean {0%{background-position:0 50%}50%{background-position:100% 50%}100%{background-position:0 50%}}
+
+h1 { text-align:center; font-size:34px; color:#6fd3ff; text-shadow:0 0 12px #50c7ff; animation: glowTitle 3s infinite alternate; }
+body.light h1 { color:#2b4f66; text-shadow:0 0 12px #6fa1c9; }
+
+@keyframes glowTitle {0%{text-shadow:0 0 10px #3aa3c9;}100%{text-shadow:0 0 20px #8fe8ff;}}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 20px;
+    backdrop-filter: blur(4px);
+}
+th, td { border: 1px solid #2a4453; padding: 8px; text-align: center; }
+th { background: rgba(10, 42, 65, 0.65); color: #aeeeff; }
+body.light th { background: rgba(200, 220, 230, 0.6); color:#041824; }
+tr:hover { background: rgba(32, 89, 122, 0.3); transition:0.3s; }
+body.light tr:hover { background: rgba(150,200,220,0.3); }
+
+input {
+    width: 60px; padding: 5px; border:1px solid #4fbbe0; background:#082430; color:#b8f3ff; border-radius:6px; text-align:center; transition:0.2s;
+}
+body.light input { background:#e0f0fc; color:#041824; border:1px solid #5c8fa3; }
+input:focus { box-shadow:0 0 12px #73e2ff; }
+
+.result { transition:0.25s ease; font-weight:bold; }
+.updated { color:#79f2ff; text-shadow:0 0 6px #54e2ff; transform:scale(1.15); }
+
+.summary { margin-top:25px; padding:15px; background:rgba(10,42,65,0.5); border:1px solid #376b85; border-radius:8px; animation: fadeIn 1.2s ease; font-size:18px; }
+body.light .summary { background: rgba(220,230,240,0.7); border:1px solid #8faabc; color:#041824; }
+
+@keyframes fadeIn { from {opacity:0; transform:translateY(15px);} to {opacity:1; transform:translateY(0);} }
+.highlight { color:#6fd3ff; font-weight:bold; font-size:20px; text-shadow:0 0 10px #4dbada; animation:pulse 2.2s infinite; }
+body.light .highlight { color:#2b4f66; text-shadow:0 0 6px #6fa1c9; }
+@keyframes pulse {0%{transform:scale(1);opacity:0.9;}50%{transform:scale(1.05);opacity:1;}100%{transform:scale(1);opacity:0.9;}}
+
+button {
+    margin-top:15px; padding:10px 20px; background:#0e374e; border:2px solid #59c9ff; color:#b8f3ff; font-size:16px; border-radius:6px; cursor:pointer; transition:0.3s;
+}
+button:hover { background:#17506d; box-shadow:0 0 10px #6bd9ff; }
+body.light button { background:#b8d6ea; border:2px solid #5c8fa3; color:#041824; }
+body.light button:hover { background:#9fc5e0; }
+
+.fish-emoji { position: fixed; font-size: 24px; user-select: none; pointer-events: none; z-index:1000; will-change: transform; opacity:0.7; animation-timing-function: linear; }
+@keyframes swimRight {0%{transform:translateX(-50px);opacity:0;}10%{opacity:1;}90%{opacity:1;}100%{transform:translateX(calc(100vw + 50px));opacity:0;}}
+
+/* --- RESPONSYWNOŚĆ --- */
+@media(max-width:600px){
+    input { width:50px; }
+    table, .summary { font-size:14px; }
+    button { font-size:14px; padding:8px 16px; }
+}
+.qty-btn { padding:3px 8px; margin:0 2px; cursor:pointer; border-radius:4px; border:none; background:#0e374e; color:#b8f3ff; transition:0.2s; }
+.qty-btn:hover { background:#17506d; }
+body.light .qty-btn { background:#b8d6ea; color:#041824; }
+body.light .qty-btn:hover { background:#9fc5e0; }
+</style>
+</head>
+<body>
+
+<h1>Kalkulator Zarobku z Ryb 🌊🐟</h1>
+
+<button id="themeToggle">Tryb Jasny / Ciemny</button>
+
+<table>
+<tr>
+    <th>Ryba</th><th>XP</th><th>Cena</th><th>Cena +20%</th><th>Boost</th><th>Ilość</th><th>Suma</th><th>Suma +20%</th><th>Suma Boost</th><th>XP Razem</th>
+</tr>
+
+<script>
+// emoji dla ryb
+const fishEmojis = ["🐟","🐠","🐚","🐡","🦀","🐙","🦈","🐬","🐳","🐋","🐢","🦞","🦐"];
+
+// dane ryb
+const fish = [
+["ŚLEDŹ",35,8000,9600,14400],
+["SARDYNKA",35,8500,10200,15300],
+["MAŁŻA",40,9000,10800,16200],
+["OKOŃ",40,10000,12000,18000],
+["DORSZ",40,11500,13800,20700],
+["MAKRELA",40,12500,15000,22500],
+["TUŃCZYK",45,13500,16200,24300],
+["SANDACZ",45,14500,17400,26100],
+["HALIBUT",50,15500,18600,27900],
+["FLĄDRA",50,16500,19800,29700],
+["CZARNY DORSZ",55,17500,21000,31500],
+["SZCZUPAK",60,19500,23400,35100],
+["KARABIBSKA KRWAWICA",70,21500,25800,38700],
+["MARLIN",70,22500,27000,40500],
+["STRZĘPIEL CZERWONOPŁETWY",75,23500,28200,42300],
+["BARRAKUDA WIELKA",75,24000,28800,43200],
+["KRÓLOWA OCEANU",75,26000,31200,46800],
+["REKIN BIAŁY",80,28000,33600,50400],
+["REKIN BŁĘKITNY",80,30000,36000,54000],
+["REKIN TYGRYSI",90,32000,38400,57600],
+["REKIN CZARNOPŁETWY",90,33000,39600,59400],
+["RYBA (BROŃ)",90,34000,40800,61200],
+["MORSKI POTWÓR",95,35000,42000,63000],
+["GIGANTYCZNA PŁASKO ZUBRZA",100,37000,44400,66600],
+["MEGA LODON",110,40000,48000,72000],
+["SYRENA",115,42000,50400,75600],
+["LEWIATAN",120,45000,54000,81000],
+["BOS MORZ",130,47000,56400,84600]
+];
+
+// zapis do localStorage
+function saveStorage() {
+    let data = fish.map((f,i)=>document.getElementById("qty"+i).value);
+    localStorage.setItem("fishQty", JSON.stringify(data));
+}
+function loadStorage() {
+    let data = JSON.parse(localStorage.getItem("fishQty")||"[]");
+    data.forEach((v,i)=>{
+        if(document.getElementById("qty"+i)) document.getElementById("qty"+i).value=v;
+    });
+}
+
+// generowanie wierszy
+function getFishEmoji(index){ return fishEmojis[index%fishEmojis.length]; }
+fish.forEach((f,i)=>{
+    document.write(`
+        <tr>
+            <td>${getFishEmoji(i)} ${f[0]}</td>
+            <td>${f[1]}</td>
+            <td>${f[2]}</td>
+            <td>${f[3]}</td>
+            <td>${f[4]}</td>
+            <td>
+                <button class="qty-btn" onclick="changeQty(${i},-1)">-</button>
+                <input type="number" id="qty${i}" min="0" value="0" oninput="calculate(); saveStorage()">
+                <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
+            </td>
+            <td id="sum${i}" class="result">0</td>
+            <td id="sum20${i}" class="result">0</td>
+            <td id="boost${i}" class="result">0</td>
+            <td id="xp${i}" class="result">0</td>
+        </tr>
+    `);
+});
+
+// zmiana ilości przyciskiem
+function changeQty(i,delta){
+    let input=document.getElementById("qty"+i);
+    input.value=Math.max(0, Number(input.value)+delta);
+    calculate();
+    saveStorage();
+}
+
+// animacja aktualizacji
+function animateUpdate(elem,newValue){
+    if(elem.textContent!==String(newValue)){
+        elem.classList.add("updated");
+        elem.textContent=newValue;
+        setTimeout(()=>{elem.classList.remove("updated");},300);
+    }
+}
+
+// kalkulacja sum
+function calculate(){
+    let totalQty=0,totalSum=0,total20=0,totalBoost=0,totalXP=0;
+    fish.forEach((f,i)=>{
+        let qty=Number(document.getElementById("qty"+i).value)||0;
+        totalQty+=qty;
+        let sum=qty*f[2], sum20=qty*f[3], boost=qty*f[4], xp=qty*f[1];
+        animateUpdate(document.getElementById("sum"+i),sum);
+        animateUpdate(document.getElementById("sum20"+i),sum20);
+        animateUpdate(document.getElementById("boost"+i),boost);
+        animateUpdate(document.getElementById("xp"+i),xp);
+        totalSum+=sum; total20+=sum20; totalBoost+=boost; totalXP+=xp;
+    });
+    document.getElementById("totalQty").textContent=totalQty;
+    document.getElementById("totalSum").textContent=totalSum;
+    document.getElementById("total20").textContent=total20;
+    document.getElementById("totalBoost").textContent=totalBoost;
+    document.getElementById("totalXP").textContent=totalXP;
+    document.getElementById("avgPrice").textContent=totalQty?Math.round(total20/totalQty):0;
+    document.getElementById("boostPercent").textContent=total20>0?Math.round((totalBoost/total20-1)*100)+"%":"0%";
+}
+
+// reset
+function resetAll(){
+    document.querySelectorAll("input").forEach(i=>i.value=0);
+    calculate();
+    saveStorage();
+}
+
+// wczytanie z localStorage
+loadStorage();
+calculate();
+
+// Tryb jasny/ciemny
+const themeBtn=document.getElementById("themeToggle");
+themeBtn.addEventListener("click",()=>{
+    document.body.classList.toggle("light");
+});
+
+// rybki w tle
+const emojisPool=["🐟","🐠","🦈","🐡","🦀","🐙"];
+function createFishEmoji(){
+    const fish=document.createElement("div");
+    fish.className="fish-emoji";
+    fish.textContent=emojisPool[Math.floor(Math.random()*emojisPool.length)];
+    fish.style.top=(Math.random()*window.innerHeight*0.9)+"px";
+    fish.style.left="-50px";
+    const duration=10000+Math.random()*10000;
+    fish.style.animation=`swimRight ${duration}ms linear forwards`;
+    document.body.appendChild(fish);
+    setTimeout(()=>{fish.remove();},duration);
+}
+setInterval(createFishEmoji,1500);
+</script>
+
+</table>
+
+<div class="summary" aria-live="polite" aria-atomic="true">
+    <p>Łączna ilość ryb: <span class="highlight" id="totalQty">0</span></p>
+    <p>Łączny zarobek (cena): <span class="highlight" id="totalSum">0</span></p>
+    <p>Łączny zarobek (+20%): <span class="highlight" id="total20">0</span></p>
+    <p>Łączny zarobek (boost): <span class="highlight" id="totalBoost">0</span></p>
+    <p>Łączne XP: <span class="highlight" id="totalXP">0</span></p>
+    <p>Średnia cena za rybę (+20%): <span class="highlight" id="avgPrice">0</span></p>
+    <p>Procentowy bonus z boosta: <span class="highlight" id="boostPercent">0%</span></p>
+</div>
+
+<button onclick="resetAll()" aria-label="Wyczyść wszystkie ilości i wyniki">Wyczyść wszystko</button>
+
+</body>
+</html>
